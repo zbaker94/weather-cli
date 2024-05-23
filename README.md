@@ -1,0 +1,1 @@
+CLI for getting weather information for the user's current location
