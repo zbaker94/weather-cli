@@ -82,10 +82,15 @@ def get_next_week():
     data = json.loads(response.text)
     parsed_days = _parse_days(data["days"])
     parsed_data = {
+        "location": {
+            "city": g.city,
+            "state": g.state,
+            "country": g.country
+        },
+        "hero": parsed_days[0],
         "description": data["description"],
         "days": parsed_days
     }
-    parsed_data["hero"] = parsed_days[0]
     # TODO print the parsed data
     print(parsed_data)
     return SUCCESS
