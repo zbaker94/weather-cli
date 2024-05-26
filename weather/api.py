@@ -1,5 +1,10 @@
 import typer
 
+import os
+
+columns, lines = os.get_terminal_size()
+
+
 import geocoder
 from geocoder import ip
 
@@ -61,6 +66,51 @@ def _parse_days(days: list) -> list:
     """Parse a list containing days of weather data."""
     return [_parse_day(day) for day in days]
 
+def _print_header(data: dict):
+    """Print the header of the weather data."""
+    location_text = f"Weather for {data['location']['city']}, {data['location']['state']}, {data['location']['country']}"
+    description_text = f"{data['description']}"
+    start_date = data['dates']["start"]
+    end_date = data['dates']["end"]
+    date_text = start_date
+
+    if (end_date != None and end_date != start_date):
+        date_text += f" - {end_date}"
+
+    # header_width = max(len(location_text), len(description_text)) + 14
+
+    location_text = "#" + location_text.center(columns -2, " ") + "#"
+    description_text = "#" + description_text.center(columns -2, " ") + "#"
+    date_text = "#" + date_text.center(columns -2, " ") + "#"
+    typer.echo("#" * columns)
+    typer.echo(location_text)
+    typer.echo(date_text)
+    typer.echo(description_text)
+    typer.echo("#" * columns)
+
+def _print_day(day: dict, span: int = 33):
+    """print a given day of weather data. spanning the given percentage of the terminal width."""
+    column_span = int(span * columns / 100)
+    header = f" {day['date']} - {day['conditions']} "
+    header = header.center(column_span, "#")
+    typer.echo(header)
+
+    temperature_info = "#" + f" Current: {day['temp']}F, High: {day['max_temp']}F, Low: {day['min_temp']}F".center(column_span -3, " ") + "#"
+    typer.echo(temperature_info)
+
+    feels_like_info = "#" + f" Feels like: {day['feels_like']}F, High: {day['feels_like_max']}F, Low: {day['feels_like_min']}F".center(column_span -3, " ") + "#"
+    typer.echo(feels_like_info)
+
+    humidity_info = "#" + f" Humidity: {day['humidity']}%, Rain Chance: {day['rain_chance']}%".center(column_span -3, " ") + "#"
+    typer.echo(humidity_info)
+
+    typer.echo("#" * column_span)
+
+def _print_days(days: list):
+    """Print all the days of weather data."""
+    for day in days:
+        _print_day(day, 100)
+
 def get_next_week():
     """Get the weather for the next week."""
     g = _get_user_location()
@@ -82,6 +132,10 @@ def get_next_week():
     data = json.loads(response.text)
     parsed_days = _parse_days(data["days"])
     parsed_data = {
+        "dates": {
+            "start": start_date,
+            "end": end_date
+        },
         "location": {
             "city": g.city,
             "state": g.state,
@@ -91,6 +145,6 @@ def get_next_week():
         "description": data["description"],
         "days": parsed_days
     }
-    # TODO print the parsed data
-    print(parsed_data)
+    _print_header(parsed_data)
+    _print_days(parsed_days)
     return SUCCESS
